@@ -5,7 +5,8 @@ from alignment.data.docs import *
 import cPickle
 
 class HumanRedact:
-    "A redaction identified by a person."
+    "A specific instance of a redaction identified by a person."
+
     def __init__(self, start, end, textBound, text, side):
         self.start = start
         self.end = end
