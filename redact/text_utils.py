@@ -56,8 +56,8 @@ class Index:
       self.word = word
 
   def to_dict(self):
-    return {"line": self.line_index, 
-            "word": self.word_index}
+    return {"line": self.line, 
+            "word": self.word}
 
 
 class Range:
@@ -98,7 +98,16 @@ class Range:
       return self.start.word, self.end.word
 
   def to_dict(self):
-      return [self.start_index.to_dict(), self.end_index.to_dict()]
+      return [self.start.to_dict(), self.end.to_dict()]
+
+
+  def __str__(self):
+      return "%d->%d"%(self.start.line, self.end.line)
+
+  def text_from_range(self, text):
+    "Returns the text corresponding to a range."
+    return "\n".join(text[self.start.line:self.end.line+1])
+
 
   # def diff(self, start_line, end_line):
   #     """

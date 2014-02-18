@@ -1,4 +1,3 @@
-import preprocessing as d
 
 class FScore:
     """
@@ -47,48 +46,47 @@ class FScore:
         return " %0.2f & %0.2f & %0.2f "%(100* self.precision(), 100 * self.recall(), 100 * self.fscore())
 
 class Prediction:
-  """
-  A prediction of a redaction made by a model. 
+    """
+    A prediction of a redaction made by a model. 
 
-  Attributes
-  -----------
+    Attributes
+    -----------
   
-  index : 
-     Index of example.
+    index :   
+       Index of example.
 
-  side :
-     The side of the pair with the redaction.
+    side :
+       The side of the pair with the redaction.
 
-  text :
-     The predicted redaction text.
+    text :
+       The predicted redaction text.
 
-  position : 
-     The predicted redaction image position.
+    position : 
+       The predicted redaction image position.
 
-  range : 
-       
+    range :      
   """
 
-  def __init__(self, index, side, text, position, range):
-    self.index = index
-    self.side = side
-    self.text = text
-    self.position = position
-    self.range = range
+    def __init__(self, index, side, text, position, range):
+        self.index = index
+        self.side = side
+        self.text = text
+        self.position = position
+        self.range = range
 
-  def __str__(self):
-    return str(self.to_dict())
+    def __str__(self):
+        return "%d %d %s %s"%(self.index, self.side, self.range, self.text[:50])  
 
-  @staticmethod
-  def from_dict(d):
-    return Prediction(d["i"], d["side"], d["text"], d["position"], -1)
+    @staticmethod
+    def from_dict(d):
+        return Prediction(d["i"], d["side"], d["text"], d["position"], -1)
 
-  def to_dict(self):
-    return {"i": self.index, 
-            "side": self.side, 
-            "text": self.text, 
-            "position": self.position,
-            "range": self.range.to_dict()}
+    def to_dict(self):
+        return {"i": self.index, 
+                "side": self.side, 
+                "text": self.text, 
+                "position": self.position,
+                "range": self.range.to_dict()}
 
 # def main():    
 #     if sys.argv[1] == "gold":

@@ -91,7 +91,7 @@ class HumanPair:
         self.redactions = redactions
         self.id = pair_id
 
-    def page_text(side):
+    def page_text(self, side):
         """
         Returns the text of the page matched on side.
         """
