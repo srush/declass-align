@@ -135,3 +135,53 @@ class Range:
   #   "Returns a range from a start and end index."
   #   return Range(start.line_index, start.word_index, 
   #                end.line_index, end.word_index)
+
+# class Text:
+#     """
+#     Page text. Represented by x on a page.
+#     """
+
+#     def __init__(self, t):
+#         """
+#         Parameters:
+#         ------------
+#         t : 
+#             Lines in a document.
+#         """
+
+#         self.t = t
+#         self._label()
+
+#   def _label(self):
+#       "Index the text into Lines"
+#       self.lines = []
+#       for line_num, line in enumerate(self.t):
+#           words = []
+#           for word_num, word in enumerate(line.split()):
+#               words.append(IndexedWord(Index(line_num, word_num), word))
+#           self.lines.append(Line(line_num, words))
+  
+#   def __len__(self):
+#       return len(self.lines)
+
+#   def __getitem__(self, i):
+#       return self.lines[i]
+
+  # def get_range(self, range):
+  #   "Return the IndexedWords in a range."
+  #   s, e = range.line_indices()
+  #   sw, ew = range.word_indices()
+  #   if s == e:
+  #     return self.lines[s].words[sw:ew]
+  #   return self.lines[s].after_text(sw) + \
+  #       sum([line.words for line in self.lines[s + 1: e]], []) + \
+  #       self.lines[e].before_text(ew)
+  
+  # def text_from_range(self, range):
+  #   "Returns the text corresponding to a range."
+  #   return " ".join([word.word for word in self.get_range(range)])
+
+  # def average_length(self):
+  #   "Mean line length."
+  #   return sum([line.word_len() for line in self.lines]) / float(len(self.lines))
+
