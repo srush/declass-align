@@ -1,13 +1,34 @@
 """
 Helper classes for managing human-annotated files. 
 """
-from alignment.data.docs import *
-import cPickle
+
+from redact.data.docs import Document 
 
 class HumanRedact:
     "A specific instance of a redaction identified by a person."
 
     def __init__(self, start, end, textBound, text, side):
+        """
+        
+        Attributes
+        -----------
+
+        start : 
+           Image start position (X, Y) position.
+
+        end :
+           Image end position (X, Y) position.
+
+        textBound : 
+           Text-range character (start, end) 
+
+        text : string
+           The text itself.
+
+        side : bool
+           Which side the redaction is on.
+        """
+    
         self.start = start
         self.end = end
         self.textBound = textBound
@@ -15,81 +36,88 @@ class HumanRedact:
         self.side = side
 
     @staticmethod
-    def for_pair(c, id):
-        "Get a HumanRedaction by ID."
+    def for_pair(cursor, pair_id):
+        """
+        Get all of the human-annotated redactions for a doc pair_id.
+
+        Parameters
+        -----------
+        
+        cursor: 
+            A DB cursor.
+
+        pair_id: 
+            The document pair_id to search.
+
+        """
         q = "select * from DocumentPairHumanRedact where pairId = %s"
-        c.execute(q, id)
+        cursor.execute(q, pair_id)
         keep = []
-        for row in c:
+        for row in cursor:
             hr = HumanRedact((row["startX"], row["startY"]), 
                              (row["endX"], row["endY"]), 
                              (row["startText"], row["endText"]), 
                              row["text"], row["side"])
-        keep.append(hr)
+            keep.append(hr)
         return keep
 
 class HumanPair:
-    "A redaction pair with metadata of identification."
-    def __init__(self, d1, d2, page1, page2, redactions, id):
+    """
+    A pair of pages that may or may not have redactions. 
+
+    
+    Attributes:
+    -----------
+    
+    d1, d2: Documents
+       The documents that are matched. 
+
+    page1, page2 : ints
+       The page number of the two documents.
+
+    redactions : List of HumanRedacts
+       The human redacts for this pair.
+
+    id : int
+       The pair_id in the database for this pair.
+
+    """
+
+    def __init__(self, d1, d2, page1, page2, redactions, pair_id):
         self.d1 = d1
         self.d2 = d2
         self.page1 = page1
         self.page2 = page2
         self.redactions = redactions
-        self.id = id
+        self.id = pair_id
 
     @staticmethod
-    def get_all(c):
-        "Get all of the human redactions for aligned docs."
+    def get_all(cursor):
+        """
+        Get all of the human-labeled pair redactions in the database.
+
+        """
         q = "select * from DocumentPairHuman where badmatch=0"
-        c.execute(q)
+        cursor.execute(q)
         pairs = []
-        for row in c:
-            redacts = HumanRedact.for_pair(c, row["id"])
-            d1 = Document.from_id(c, row["docId1"])
-            d2 = Document.from_id(c, row["docId2"])
+        for row in cursor:
+            redacts = HumanRedact.for_pair(cursor, row["id"])
+            d1 = Document.from_id(cursor, row["docId1"])
+            d2 = Document.from_id(cursor, row["docId2"])
             pairs.append(HumanPair(d1, d2, 
                                    row["page1"], 
                                    row["page2"], 
                                    redacts, 
                                    row["id"]))
         return pairs
-
-    @staticmethod
-    def get_all_from_pickle(file = "/tmp/human.pickle"):
-        "Load human redaction from pickle file"
-        return cPickle.load(open("/tmp/human.pickle", 'rb'))
   
-
   
 # When called as executable, writes all human redactions to a pickle file.
 if __name__ == "__main__":  
     import sys
-    import cPickle
-    import alignment.data.passwd as passwd
+    import redact.data.passwd as passwd
     db = passwd.get_db()
-    c = passwd.get_cursor(db)
-    all = HumanPair.get_all(c)
-    cPickle.dump(all, open("/tmp/human.pickle", 'wb'))
+    cursor = passwd.get_cursor(db)
+    all = HumanPair.get_all(cursor)
+    
 
-
-# def get_all_from_db():
-#   import MySQLdb as mysql
-#   import alignment.passwd as passwd
-#   db = passwd.get_db()
-#   c = db.cursor(mysql.cursors.DictCursor)
-
-#   pages = set()
-#   for l in open("/tmp/eval_list"):
-#     t = l.split()
-#     if len(t) != 8: continue
-#     f, pair, id1, id2, y1, y2, p1, p2= t
-#     if f != "PAGE": continue
-#     pages.add((id1, id2, y1, y2, p1, p2))
-#   pages = list(pages)
-
-#   for p in pages:
-#     (id1, id2, y1, y2, p1, p2) = p
-#     d1 = Document.from_id(c, id1)
-#     d2 = Document.from_id(c, id2)
-#     yield HumanPair(d1, d2, int(p1), int(p2), [])
