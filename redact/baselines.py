@@ -1,12 +1,13 @@
 """
-Some baseline methods for document alignment. 
+Some baseline methods for document alignment.
 """
 import re
 from itertools import takewhile, dropwhile
-import redact.text_utils 
-from redact.text_utils  import Range
-from redact.experiments  import Prediction
+import redact.text_utils
+from redact.text_utils import Range
+from redact.experiments import Prediction
 import cv2
+
 
 class Page:
     """
@@ -15,7 +16,7 @@ class Page:
     Attributes
     ----------
     x : List
-            The text of the document in lines. 
+            The text of the document in lines.
     
     y : List 
         The layout of the image in x,y coordinates.

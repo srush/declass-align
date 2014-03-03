@@ -25,7 +25,7 @@ class FuzzyLine:
     def __hash__(self):
         return hash(self.w)
 
-def fuzzy(l1, l2, thres = 0.8):
+def fuzzy(l1, l2, thres=0.8):
     """
     Returns true if two lines are close matches.
 
