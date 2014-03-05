@@ -3,12 +3,14 @@ Some baseline methods for document alignment.
 """
 import re
 from itertools import takewhile, dropwhile
-import redact.text_utils
+import redact.images as images
+import redact.text_utils as text_utils
 from redact.text_utils import Range
-from redact.experiments import Prediction
+from collections import namedtuple
 import cv2
+import difflib
 
-
+Box = namedtuple('Box', ['x', 'y', 'w', 'h'])
 class Page:
     """
     A representation of a page in a document.
@@ -34,6 +36,70 @@ class Page:
                 "%d: %s"%(i,l)
                 for i, l in enumerate(self.x)])
 
+class Prediction:
+    """
+    A prediction of a redaction made by a model. 
+
+    Attributes
+    -----------
+  
+    index :   
+       Index of example.
+
+    side :
+       The side of the pair with the redaction.
+
+    text :
+       The predicted redaction text.
+
+    position : 
+       The predicted redaction image position.
+
+    range :      
+    """
+
+    def __init__(self, index, side, text, position, range):
+        self.index = index
+        self.side = side
+        self.text = text
+        self.position = position
+        self.range = range
+
+    def __str__(self):
+        return "%d %d %s %s"%(self.index, self.side, self.range, self.text[:50])  
+
+    @staticmethod
+    def from_dict(d):
+        return Prediction(d["i"], d["side"], d["text"], d["position"], -1)
+
+    def to_dict(self):
+        return {"i": self.index, 
+                "side": self.side, 
+                "text": self.text, 
+                "position": self.position,
+                "range": self.range.to_dict()}
+
+
+def make_gold_predictions(human_redactions):
+    """
+    Construct gold predictions from a set of human annotated redactions.
+    
+    Parameters
+    -----------
+    human_redactions : list of HumanRedaction's
+
+    Returns:
+    --------
+    golds : iterators
+        Iterator of sets of Predictions
+    """
+    for i, human in enumerate(human_redactions):
+        gold_set = set()
+        for j, redact in enumerate(human.redactions):
+            gold_set.add(Prediction(i, redact.side - 1, redact.text, 
+                                    redact.start[1], text_utils.Range(0,0,0,0)))
+        yield gold_set
+
 class TextAligner:
     """
     Simple aligner based on the line text of the document. 
@@ -54,7 +120,7 @@ class TextAligner:
         # align = dp.AlignAlgorithm(p1, p2)
         # t1, i1 = p1.x, p1.y
         # t2, i2 = p2.x, p2.y
-        ops = redact.text_utils.fuzzy_text_align(p1.x, p2.x)
+        ops = text_utils.fuzzy_text_align(p1.x, p2.x)
         t = [p1.x, p2.x]
         for op in ops:
             if op[0] != "equal":
@@ -67,6 +133,85 @@ class TextAligner:
         #     for range in ret[side]:
         #         yield Prediction(index, side, 
         #                          text_from_range(t[side], range), 0, range)
+
+
+
+class ImageAligner:
+    """
+    Simple aligner based on the position of lines in the layout. 
+    """
+
+    def align(self, p1, p2, index):
+        """
+        Yields predictions of alignments.
+      
+        Parameters
+        ----------
+        p1, p2 : A pair of Page's
+            The two pages to be aligned
+        
+        index :
+            An identifiers of the pair.
+        """
+        t = [p1.y, p2.y]
+        for op in im_util.fuzzy_box_align(p1.y, p2.y):
+            if op[0] != "equal":
+                r = Range.from_op(op)
+                side = 0 if r[0].num_lines() > r[1].num_lines() else 1
+                # for box in boxes[side][r[side].start.line:r[side].end.line]: 
+                #     images.draw_box(ims[side], box)
+                yield Prediction(index, side,
+                                 0,  
+                                 t[side][r[side].start].y,
+                                 r[side])
+
+
+class SimpleJointAligner:
+  """
+  Alignment algorithm that combines the image and text aligners.
+  """
+  def __init(self):
+      self.im_align = ImageAligner()
+      self.text_align = TextAligner()
+      
+
+  def align(self, p1, p2, index):
+      res_im = list(self.image_align.align(p1, p2, index))
+      res_text = list(self.text_align.align(p1, p2, index))
+    
+      for pred_text in res_text:
+          closest = 100
+          c = -1
+          for pred_im in res_im:
+              if pred_text.side != pred_im.side: continue
+              temp = abs(pred_im.range.start_index.line_index - \
+                             pred_text.range.start_index.line_index) < 5
+              if temp < closest:
+                  closest = temp
+                  c = pred_im
+          if closest < 5:
+              yield Prediction(c.index, c.side, 
+                               pred_text.text, c.position, pred_text.range)    
+
+def make_layout(boxes, min_width = 200, top_width = 200):
+    """
+    Construct a layout from predicted boxes.
+
+    Parameters
+    -----------
+    min_width : 
+        The minimum width for a box.
+
+    top_width : 
+        The minimum width for a box at the top of the page.
+    """
+    layout = [Box(x,y,w,h) for (x,y,w,h) in boxes if h > 5 and x < top_width]
+    layout = dropwhile(lambda a: a.w < min_width , layout)
+    layout = rdropwhile(lambda a: a.w < min_width or \
+                            (a.x > 100 and a.w < 100), layout )
+    layout.sort(key = lambda a: a.y)
+    layout = [Box(0, 0, 0, 0)] + layout + [Box(0, 1000, 0, 0)]
+    return layout
 
 IMAGE_PATH = "/home/srush/data/declass/Img/"
 def make_docs(human_pair):
@@ -93,12 +238,12 @@ def make_docs(human_pair):
     im1, im2 = cv2.imread(IMAGE_PATH + im1), cv2.imread(IMAGE_PATH + im2)
 
     # Run image processing.
-    #(b1, b2), (image1, image2), (nr1, nr2) = process_images(r, d1, d2)
+    b1, b2 = images.make_boxes(im1, im2)
 
     image1 = im1
     image2 = im2
-    layout1 = None #make_layout(b1)
-    layout2 = None#make_layout(b2)
+    layout1 = make_layout(b1)
+    layout2 = make_layout(b2)
     page1 = Page(t1, layout1, image1)
     page2 = Page(t2, layout2, image2)
     return page1, page2
@@ -173,3 +318,33 @@ def process_text(page_text, min_length = 5):
     # for side in [0,1]:
     #   for range in ret[side]:
     #     yield Prediction(index, side, t[side].text_from_range(range), 0, range)
+
+class PredictionLine:
+    def __init__(self, prediction):
+        self.l = prediction.position
+    
+    def __eq__(self, o):
+        if o.l == 0.0 or self.l == 0.0: return False
+        return abs(self.l - o.l) < 0.1
+
+    def __repr__(self):
+        return str(self.l)
+
+class PredictionBoth:
+    def __init__(self, prediction):
+        self.l = PredictionLine(prediction)
+        self.t = PredictionText(prediction)
+    
+    def __eq__(self, o):
+        return self.l == o.l and self.t == o.t
+
+class PredictionText:
+    def __init__(self, prediction):
+        self.l = prediction.text
+    
+    def __eq__(self, o):
+        if o.l == "" or self.l == "": return False
+        return difflib.SequenceMatcher(None, self.l, o.l, autojunk=None).ratio() > 0.5
+
+    def __repr__(self):
+        return self.l

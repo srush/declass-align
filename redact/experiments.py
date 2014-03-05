@@ -1,33 +1,76 @@
 
+import pandas as pd
+
+
 class FScore:
     """
     Compute F1-Score based on gold set and test set.
     """
 
-    def __init__(self):
+    def __init__(self, wrapper=lambda a:a, name=""):
         self.gold = 0
         self.test = 0
         self.correct = 0
+        self.name = name
+        self.wrapper = wrapper
 
-    def increment(self, gold_set, test_set):
-        "Add examples from sets."
+    def increment(self, gold, test):
+        """
+        Add examples from sets.
+        
+        Parameters
+        ----------
+        gold : Set 
+            Container of gold items.
+
+        test : Set 
+            Constainer of test items.
+            
+        """
+        gold_set = map(self.wrapper, gold)
+        test_set = map(self.wrapper, test)
         self.gold += len(gold_set)
         self.test += len(test_set)
         self.correct += len([1 for g in gold_set 
                              if any([t == g or g == t for t in test_set])])
 
+    @property
     def fscore(self): 
-        pr = self.precision() + self.recall()
+        pr = self.precision + self.recall
         if pr == 0: return 0.0
-        return (2 * self.precision() * self.recall()) / float(pr)
+        return (2 * self.precision * self.recall) / float(pr)
 
+    @property
     def precision(self): 
         if self.test == 0: return 0.0
         return self.correct / float(self.test)
 
+    @property
     def recall(self): 
         if self.gold == 0: return 0.0
         return self.correct / float(self.gold)    
+
+    def add_to_dict(self, d):
+        d["F-Score"].append(self.fscore)
+        d["Recall"].append(self.recall)
+        d["Precision"].append(self.precision)
+
+
+    def from_sets(self, gold_sets, test_sets):
+        assert (len(gold_sets) == len(test_sets))
+        for gold, test in zip(gold_sets, test_sets):
+            self.increment(gold, test)
+        return self
+
+
+    @staticmethod
+    def make_pandas_table(fscores):
+        d = {"F-Score":[], "Recall": [], "Precision":[]}
+        names = []
+        for fscore in fscores:
+            fscore.add_to_dict(d)
+            names.append(fscore.name)
+        return pd.DataFrame(d, index=names)
 
     @staticmethod
     def output_header():
@@ -45,48 +88,7 @@ class FScore:
         "Output a scoring row."
         return " %0.2f & %0.2f & %0.2f "%(100* self.precision(), 100 * self.recall(), 100 * self.fscore())
 
-class Prediction:
-    """
-    A prediction of a redaction made by a model. 
 
-    Attributes
-    -----------
-  
-    index :   
-       Index of example.
-
-    side :
-       The side of the pair with the redaction.
-
-    text :
-       The predicted redaction text.
-
-    position : 
-       The predicted redaction image position.
-
-    range :      
-  """
-
-    def __init__(self, index, side, text, position, range):
-        self.index = index
-        self.side = side
-        self.text = text
-        self.position = position
-        self.range = range
-
-    def __str__(self):
-        return "%d %d %s %s"%(self.index, self.side, self.range, self.text[:50])  
-
-    @staticmethod
-    def from_dict(d):
-        return Prediction(d["i"], d["side"], d["text"], d["position"], -1)
-
-    def to_dict(self):
-        return {"i": self.index, 
-                "side": self.side, 
-                "text": self.text, 
-                "position": self.position,
-                "range": self.range.to_dict()}
 
 # def main():    
 #     if sys.argv[1] == "gold":

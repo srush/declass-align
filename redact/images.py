@@ -22,6 +22,11 @@ FLANN_INDEX_KDTREE = 1  # bug: flann enums are missing
 flann_params = dict(algorithm = FLANN_INDEX_KDTREE,
                     trees = 4)
 
+def make_boxes(im1, im2):
+    warp = align_images(im1, im2)
+    im1 = clean_text_image(im1)
+    im2 = clean_text_image(warp)
+    return (find_lines(im1), find_lines(im2))
 
 def clean_text_image(image):
     """
