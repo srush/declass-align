@@ -43,6 +43,21 @@ def align_images(im1, im2):
     points2 = np.array([key2[point].pt for _, point in pairs])
     return warp_image_from_match(im1, im2, points1, points2)
 
+def median_filter(img, aperture):
+    """
+    Parameters
+    ----------
+    img : numpy ndarray
+    
+    aperture : odd numbered int; size of window for median filter
+    
+    Returns
+    -------
+    filtered_img : numpy ndarray, the image with blur applied
+    """
+    filtered_img = cv2.medianBlur(img, aperture) 
+    return filtered_img
+
 
 def make_surf_detector():
     return cv2.SURF(500, 4, 2, False, True)
