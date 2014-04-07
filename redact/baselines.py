@@ -40,7 +40,7 @@ class Prediction:
     """
     A prediction of a redaction made by a model. 
 
-    Attributes
+    Attribute
     -----------
   
     index :   
