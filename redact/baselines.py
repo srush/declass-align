@@ -4,6 +4,7 @@ Some baseline methods for document alignment.
 import re
 from itertools import takewhile, dropwhile
 import redact.images as images
+import redact.image_utils as im_utils
 import redact.text_utils as text_utils
 from redact.text_utils import Range
 from collections import namedtuple
@@ -154,17 +155,20 @@ class ImageAligner:
             An identifiers of the pair.
         """
         t = [p1.y, p2.y]
-        for op in im_util.fuzzy_box_align(p1.y, p2.y):
+        for op in im_utils.fuzzy_box_align(p1.y, p2.y):
             if op[0] != "equal":
                 r = Range.from_op(op)
                 side = 0 if r[0].num_lines() > r[1].num_lines() else 1
                 # for box in boxes[side][r[side].start.line:r[side].end.line]: 
                 #     images.draw_box(ims[side], box)
-                yield Prediction(index, side,
+                import pdb; pdb.set_trace()
+		yield Prediction(index, side,
                                  0,  
                                  t[side][r[side].start].y,
                                  r[side])
 
+    			#def __init__(self, index, side, text, position, range):
+ 
 
 class SimpleJointAligner:
   """
