@@ -161,10 +161,9 @@ class ImageAligner:
                 side = 0 if r[0].num_lines() > r[1].num_lines() else 1
                 # for box in boxes[side][r[side].start.line:r[side].end.line]: 
                 #     images.draw_box(ims[side], box)
-                import pdb; pdb.set_trace()
 		yield Prediction(index, side,
                                  0,  
-                                 t[side][r[side].start].y,
+                                 t[side][r[side].start.line].y, #assume we are looking at line index for predictions
                                  r[side])
 
     			#def __init__(self, index, side, text, position, range):
