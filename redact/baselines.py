@@ -10,6 +10,7 @@ from redact.text_utils import Range
 from collections import namedtuple
 import cv2
 import difflib
+import argparse
 
 Box = namedtuple('Box', ['x', 'y', 'w', 'h'])
 class Page:
@@ -57,6 +58,8 @@ class Prediction:
        The predicted redaction image position.
 
     range :      
+        Range of predicted text, containing
+        start line, word and end line, word.
     """
 
     def __init__(self, index, side, text, position, range):
@@ -157,17 +160,17 @@ class ImageAligner:
         t = [p1.y, p2.y]
         for op in im_utils.fuzzy_box_align(p1.y, p2.y):
             if op[0] != "equal":
-                r = Range.from_op(op)
+                range = Range.from_op(op)
                 side = 0 if r[0].num_lines() > r[1].num_lines() else 1
                 # for box in boxes[side][r[side].start.line:r[side].end.line]: 
                 #     images.draw_box(ims[side], box)
+                text = 0 #no text prediction
+                position = t[side][r[side].start.line].y 
+                #assume we are looking at line index for predictions
 		yield Prediction(index, side,
-                                 0,  
-                                 t[side][r[side].start.line].y, #assume we are looking at line index for predictions
-                                 r[side])
-
-    			#def __init__(self, index, side, text, position, range):
- 
+                                 text, 
+                                 position,
+                                 range[side])
 
 class SimpleJointAligner:
   """
@@ -216,14 +219,14 @@ def make_layout(boxes, min_width = 200, top_width = 200):
     layout = [Box(0, 0, 0, 0)] + layout + [Box(0, 1000, 0, 0)]
     return layout
 
-IMAGE_PATH = "/media/sophie/Sophie Drive/images/Img/"
-def make_docs(human_pair):
+def make_docs(human_pair, image_path):
     """
     Construct potential documents to align.
 
     Parameters
     -----------
     human_pair : HumanPair
+    image_path : Path to images
     
     Returns
     ---------
@@ -239,7 +242,7 @@ def make_docs(human_pair):
     im1 = "%s.png"%(human_pair.d1.img(human_pair.page1))
     im2 = "%s.png"%(human_pair.d2.img(human_pair.page2))
     #import pdb; pdb.set_trace()
-    im1, im2 = cv2.imread(IMAGE_PATH + im1), cv2.imread(IMAGE_PATH + im2)
+    im1, im2 = cv2.imread(image_path + im1), cv2.imread(image_path + im2)
     #import pdb; pdb.set_trace()
     # Run image processing.
     b1, b2 = images.make_boxes(im1, im2)
@@ -282,7 +285,7 @@ def process_text(page_text, min_length = 5):
     # differ = difflib.SequenceMatcher(
     #   None,
     #   [TextAligner.M(t.to_text()) for t in t1.lines], 
-    #   [TextAligner.M(t.to_text()) for t in t2.lines], 
+    #   [TextAligner.M(t.to_text()) for t in t2.lines],
     #   autojunk=None)
     # ops = differ.get_opcodes()
 
