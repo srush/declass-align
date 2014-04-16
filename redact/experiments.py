@@ -1,7 +1,6 @@
 
 import pandas as pd
 
-
 class FScore:
     """
     Compute F1-Score based on gold set and test set.
@@ -24,7 +23,7 @@ class FScore:
             Container of gold items.
 
         test : Set 
-            Constainer of test items.
+            Container of test items.
             
         """
         gold_set = map(self.wrapper, gold)
@@ -61,7 +60,6 @@ class FScore:
         for gold, test in zip(gold_sets, test_sets):
             self.increment(gold, test)
         return self
-
 
     @staticmethod
     def make_pandas_table(fscores):

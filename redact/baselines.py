@@ -42,7 +42,7 @@ class Prediction:
     """
     A prediction of a redaction made by a model. 
 
-    Attribute
+    Attributes
     -----------
   
     index :   
@@ -166,8 +166,8 @@ class ImageAligner:
                 #     images.draw_box(ims[side], box)
                 text = 0 #no text prediction
                 position = t[side][r[side].start.line].y 
-                #assume we are looking at line index for predictions
-		yield Prediction(index, side,
+                # Assume we are looking at line index for predictions.
+                yield Prediction(index, side,
                                  text, 
                                  position,
                                  range[side])
