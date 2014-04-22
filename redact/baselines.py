@@ -19,11 +19,11 @@ class Page:
     ----------
     x : List
             The text of the document in lines.
-    
-    y : List 
+
+    y : List
         The layout of the image in x,y coordinates.
 
-    z :  
+    z :
         The image as a numpy array.
     """
     def __init__(self, text, layout, image):
@@ -32,18 +32,18 @@ class Page:
         self.z = image
 
     def __str__(self):
-        return "\n".join([ 
+        return "\n".join([
                 "%d: %s"%(i,l)
                 for i, l in enumerate(self.x)])
 
 class Prediction:
     """
-    A prediction of a redaction made by a model. 
+    A prediction of a redaction made by a model.
 
     Attributes
     -----------
-  
-    index :   
+
+    index :
        Index of example.
 
     side :
@@ -52,10 +52,10 @@ class Prediction:
     text :
        The predicted redaction text.
 
-    position : 
+    position :
        The predicted redaction image position.
 
-    range :      
+    range :
     """
 
     def __init__(self, index, side, text, position, range):
@@ -66,16 +66,16 @@ class Prediction:
         self.range = range
 
     def __str__(self):
-        return "%d %d %s %s"%(self.index, self.side, self.range, self.text[:50])  
+        return "%d %d %s %s"%(self.index, self.side, self.range, self.text[:50])
 
     @staticmethod
     def from_dict(d):
         return Prediction(d["i"], d["side"], d["text"], d["position"], -1)
 
     def to_dict(self):
-        return {"i": self.index, 
-                "side": self.side, 
-                "text": self.text, 
+        return {"i": self.index,
+                "side": self.side,
+                "text": self.text,
                 "position": self.position,
                 "range": self.range.to_dict()}
 
@@ -83,7 +83,7 @@ class Prediction:
 def make_gold_predictions(human_redactions):
     """
     Construct gold predictions from a set of human annotated redactions.
-    
+
     Parameters
     -----------
     human_redactions : list of HumanRedaction's
@@ -96,24 +96,24 @@ def make_gold_predictions(human_redactions):
     for i, human in enumerate(human_redactions):
         gold_set = set()
         for j, redact in enumerate(human.redactions):
-            gold_set.add(Prediction(i, redact.side - 1, redact.text, 
+            gold_set.add(Prediction(i, redact.side - 1, redact.text,
                                     redact.start[1], text_utils.Range(0,0,0,0)))
         yield gold_set
 
 class TextAligner:
     """
-    Simple aligner based on the line text of the document. 
+    Simple aligner based on the line text of the document.
     """
 
     def align(self, p1, p2, index):
         """
         Yields predictions of alignments.
-      
+
         Parameters
         ----------
         p1, p2 : A pair of Page's
         The two pages to be aligned
-        
+
         index :
           An identifiers of the pair.
         """
@@ -127,29 +127,29 @@ class TextAligner:
                 r = Range.from_op(op)
                 side = 0 if r[0].num_lines() > r[1].num_lines() else 1
                 yield Prediction(index, side,
-                                 r[side].text_from_range(t[side]), 
+                                 r[side].text_from_range(t[side]),
                                  0, r[side])
         # for side in [0,1]:
         #     for range in ret[side]:
-        #         yield Prediction(index, side, 
+        #         yield Prediction(index, side,
         #                          text_from_range(t[side], range), 0, range)
 
 
 
 class ImageAligner:
     """
-    Simple aligner based on the position of lines in the layout. 
+    Simple aligner based on the position of lines in the layout.
     """
 
     def align(self, p1, p2, index):
         """
         Yields predictions of alignments.
-      
+
         Parameters
         ----------
         p1, p2 : A pair of Page's
             The two pages to be aligned
-        
+
         index :
             An identifiers of the pair.
         """
@@ -158,10 +158,10 @@ class ImageAligner:
             if op[0] != "equal":
                 r = Range.from_op(op)
                 side = 0 if r[0].num_lines() > r[1].num_lines() else 1
-                # for box in boxes[side][r[side].start.line:r[side].end.line]: 
+                # for box in boxes[side][r[side].start.line:r[side].end.line]:
                 #     images.draw_box(ims[side], box)
                 yield Prediction(index, side,
-                                 0,  
+                                 0,
                                  t[side][r[side].start].y,
                                  r[side])
 
@@ -173,12 +173,12 @@ class SimpleJointAligner:
   def __init(self):
       self.im_align = ImageAligner()
       self.text_align = TextAligner()
-      
+
 
   def align(self, p1, p2, index):
       res_im = list(self.image_align.align(p1, p2, index))
       res_text = list(self.text_align.align(p1, p2, index))
-    
+
       for pred_text in res_text:
           closest = 100
           c = -1
@@ -190,8 +190,8 @@ class SimpleJointAligner:
                   closest = temp
                   c = pred_im
           if closest < 5:
-              yield Prediction(c.index, c.side, 
-                               pred_text.text, c.position, pred_text.range)    
+              yield Prediction(c.index, c.side,
+                               pred_text.text, c.position, pred_text.range)
 
 def make_layout(boxes, min_width = 200, top_width = 200):
     """
@@ -199,10 +199,10 @@ def make_layout(boxes, min_width = 200, top_width = 200):
 
     Parameters
     -----------
-    min_width : 
+    min_width :
         The minimum width for a box.
 
-    top_width : 
+    top_width :
         The minimum width for a box at the top of the page.
     """
     layout = [Box(x,y,w,h) for (x,y,w,h) in boxes if h > 5 and x < top_width]
@@ -221,15 +221,15 @@ def make_docs(human_pair):
     Parameters
     -----------
     human_pair : HumanPair
-    
+
     Returns
     ---------
-    p1, p2 : A pair of Pages  
-    
+    p1, p2 : A pair of Pages
+
     """
     page1_text = human_pair.page_text(1)
     page2_text = human_pair.page_text(2)
-    
+
     t1 = process_text(page1_text)
     t2 = process_text(page2_text)
 
@@ -257,8 +257,8 @@ def process_text(page_text, min_length = 5):
     c = re.compile(r"\\n\\n|<\?BR\?>|<PARA>")
 
     l1 =  re.split(c, page_text.replace("</PARA>", ""))
-    
-    # Drop everything after <?HR?> footer. 
+
+    # Drop everything after <?HR?> footer.
     l1 = takewhile(lambda a: "<?HR?>" not in a, l1)
 
     def bad_lines(line):
@@ -266,8 +266,8 @@ def process_text(page_text, min_length = 5):
           (sum(c.isupper() for c in line) / float(len(line)) >= 0.5 and \
              len(line.split()) <= min_length)
 
-    # Dropping only lines at the beginning and end of the 
-    # page that are bade. 
+    # Dropping only lines at the beginning and end of the
+    # page that are bade.
     l1 = dropwhile(bad_lines, l1)
     l1 = rdropwhile(bad_lines, l1)
     l1 = [l for l in l1 if len(l) > min_length]
@@ -277,8 +277,8 @@ def process_text(page_text, min_length = 5):
 
     # differ = difflib.SequenceMatcher(
     #   None,
-    #   [TextAligner.M(t.to_text()) for t in t1.lines], 
-    #   [TextAligner.M(t.to_text()) for t in t2.lines], 
+    #   [TextAligner.M(t.to_text()) for t in t1.lines],
+    #   [TextAligner.M(t.to_text()) for t in t2.lines],
     #   autojunk=None)
     # ops = differ.get_opcodes()
 
@@ -287,9 +287,9 @@ def process_text(page_text, min_length = 5):
         #   text2 = t2.get_range(Range(op[3], 0, op[4], 0))
         #   print len(text2), text2
         #   differ2 = difflib.SequenceMatcher(
-        #     None, 
-        #     [W(t.word) for t in text1], 
-        #     [W(t.word) for t in text2], 
+        #     None,
+        #     [W(t.word) for t in text1],
+        #     [W(t.word) for t in text2],
         #     autojunk=None)
         #   ops2 = differ2.get_opcodes()
         #   for op2 in ops2:
@@ -322,7 +322,7 @@ def process_text(page_text, min_length = 5):
 class PredictionLine:
     def __init__(self, prediction):
         self.l = prediction.position
-    
+
     def __eq__(self, o):
         if o.l == 0.0 or self.l == 0.0: return False
         return abs(self.l - o.l) < 0.1
@@ -334,14 +334,14 @@ class PredictionBoth:
     def __init__(self, prediction):
         self.l = PredictionLine(prediction)
         self.t = PredictionText(prediction)
-    
+
     def __eq__(self, o):
         return self.l == o.l and self.t == o.t
 
 class PredictionText:
     def __init__(self, prediction):
         self.l = prediction.text
-    
+
     def __eq__(self, o):
         if o.l == "" or self.l == "": return False
         return difflib.SequenceMatcher(None, self.l, o.l, autojunk=None).ratio() > 0.5
