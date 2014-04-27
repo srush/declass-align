@@ -5,15 +5,15 @@ Make module for topic modelling, so we can plug in
 either FRUS or Sasha's text predictions
 """
 import redact.data.passwd as passwd
+import re
 
-
-def get_frus(n):
+def get_texts(n):
     """Establish database connection and 
     perform query to fetch rows
     
     Parameters
     ----------
-    n : the number of rows to fetch
+    n : the number of documents to fetch
     
     Returns
     -------
@@ -21,12 +21,10 @@ def get_frus(n):
     """    
     db = passwd.get_db()
     cursor = passwd.get_cursor(db)
-    q = "select * from frus limit " + str(n) 
+    q = "select fullbody from frus limit " + str(n) 
     cursor.execute(q)
-    return cursor
-
-def get_text(cursor):
     all_texts = [row['fullbody'] for row in cursor]
+
     return all_texts
 
 def get_redactions(all_texts):
