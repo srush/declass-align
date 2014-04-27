@@ -21,7 +21,7 @@ def get_frus(n):
     """    
     db = passwd.get_db()
     cursor = passwd.get_cursor(db)
-    q = "select * from frus limit 1000"
+    q = "select * from frus limit " + str(n) 
     cursor.execute(q)
     return cursor
 
