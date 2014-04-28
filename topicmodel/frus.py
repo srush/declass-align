@@ -38,4 +38,19 @@ def get_indices(all_texts):
     indices = [re.finditer("\[.*?declassified.*?\]", text) \
             for text in all_texts]
 
+def get_para(all_texts):
+    # Get the paragraph surrounding the redaction 
+    # including the redaction marking.
+    # returns lists of list per document
+    para = [re.findall("\n(.*?\[.*?declassified.*?\].*?)\n", text) \
+            for text in all_texts]
+    return para
+
+def get_surround(all_para):
+    # Note that this also flattens the list, 
+    # Now it's a list of strings not of lists.
+    surr = [re.sub("\[.*?declassified.*?\]", "", p) \
+            for doc in all_para \
+            for p in doc]
+    return surr
 
