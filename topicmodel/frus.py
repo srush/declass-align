@@ -1,7 +1,5 @@
 """
-Make OOP
-Make replicable
-Make module for topic modelling, so we can plug in 
+Module for topic modelling, so we can plug in 
 either FRUS or Sasha's text predictions
 """
 import redact.data.passwd as passwd
@@ -28,27 +26,27 @@ def get_texts(n):
     return all_texts
 
 def get_redactions(all_texts):
-    # Format: list of lists, list per document of redactions
+    """Format: list of lists, list per document of redactions"""
     redact = [re.findall("\[.*?declassified.*?\]", text) \
             for text in all_texts]
     return redact
 
 def get_indices(all_texts):
-    # Indices of redactions
+    """Indices of redactions"""
     indices = [re.finditer("\[.*?declassified.*?\]", text) \
             for text in all_texts]
 
 def get_para(all_texts):
-    # Get the paragraph surrounding the redaction 
-    # including the redaction marking.
-    # returns lists of list per document
+    """Get the paragraph surrounding the redaction 
+        including the redaction marking.
+        returns lists of list per document"""
     para = [re.findall("\n(.*?\[.*?declassified.*?\].*?)\n", text) \
             for text in all_texts]
     return para
 
 def get_surround(all_para):
-    # Note that this also flattens the list, 
-    # Now it's a list of strings not of lists.
+    """Note that this also flattens the list, 
+        Now it's a list of strings not of lists."""
     surr = [re.sub("\[.*?declassified.*?\]", "", p) \
             for doc in all_para \
             for p in doc]
