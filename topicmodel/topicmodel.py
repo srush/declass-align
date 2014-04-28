@@ -16,7 +16,26 @@ class TopicModel:
         self.tokens = tokenize(docs)
         self.dictionary = make_id2word(self.tokens)
         self.corpus = make_corpus(self.dictionary)
-       
+     
+    def lda(self, n):
+        """ 
+        lda topic model wrapper
+        """
+        # Train model on corpus
+        lda = models.LdaModel(self.corpus, id2word=self.dictionary, num_topics=n) 
+        lda.print_topics()
+        # Transform the corpus using LDA model
+        #corpus_lda = lda[self.corpus]
+        return lda
+
+    def hdp_lda(self):
+        """
+        hdp topic model wrapper
+        """
+        hdp = models.HdpModel(self.corpus, id2word=self.dictionary) 
+        hdp.print_topics()
+        return hdp
+      
 def tokenize(docs):
     """Tokenize the documents by splitting ea. string;
     also cast tokens in unicode, with error replace
@@ -52,39 +71,4 @@ def make_corpus(dictionary):
  
     corpus = [dictionary.doc2bow(text) for text in tokens]
     return corpus
-
-def lda(corpus, n):
-    """ 
-    lda topic model wrapper
-    """
-    # Train model on corpus
-    lda = models.LdaModel(corpus, id2word=dictionary, num_topics=n) 
-    # Transform the corpus using LDA model
-    corpus_lda = lda[corpus]
-    return lda, corpus_lda
-
-def hdp_lda(corpus):
-    """
-    hdp topic model wrapper
-    """
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -5,13 +5,13 @@ either FRUS or Sasha's text predictions
 import redact.data.passwd as passwd
 import re
 
-def get_texts(n):
+def get_texts(limit=None):
     """Establish database connection and 
     perform query to fetch rows
     
     Parameters
     ----------
-    n : the number of documents to fetch
+    limit : limit the number of documents to fetch
     
     Returns
     -------
@@ -19,7 +19,10 @@ def get_texts(n):
     """    
     db = passwd.get_db()
     cursor = passwd.get_cursor(db)
-    q = "select fullbody from frus limit " + str(n) 
+    if limit:
+        q = "select fullbody from frus limit " + str(limit) 
+    else:
+        q = "select fullbody from frus"
     cursor.execute(q)
     all_texts = [row['fullbody'] for row in cursor]
 
