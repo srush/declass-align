@@ -4,6 +4,7 @@ Wrapper for gensim topic modeling
 """
 from gensim import corpora, models, similarities
 from nltk.corpus import stopwords
+from nltk.tokenize import RegexpTokenizer
 import logging
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -15,7 +16,7 @@ class TopicModel:
         """
         self.tokens = tokenize(docs)
         self.dictionary = make_id2word(self.tokens)
-        self.corpus = make_corpus(self.dictionary)
+        self.corpus = make_corpus(self.dictionary, self.tokens)
      
     def lda(self, n):
         """ 
@@ -39,10 +40,17 @@ class TopicModel:
 def tokenize(docs):
     """Tokenize the documents by splitting ea. string;
     also cast tokens in unicode, with error replace
+    Returns: a list of lists of tokenized words
     """
-    tokens = map(lambda doc: \
-            [unicode(token, errors='replace') \
-                for token in doc.lower().split()], docs)
+    # Convert all strings to lowercase first
+    docs = [doc.lower() for doc in docs]
+
+    # Get rid of punctuations; match letters only
+    tokenizer = RegexpTokenizer(r'[a-z]+')
+    tokens = [[unicode(token, errors='replace') \
+                for token in tokenizer.tokenize(doc)] \
+                for doc in docs]
+  
     return tokens    
 
 def make_id2word(tokens):
@@ -52,13 +60,16 @@ def make_id2word(tokens):
     dictionary = corpora.Dictionary(tokens)
     return dictionary
 
-def make_corpus(dictionary):
+def make_corpus(dictionary, tokens):
     """Make gensim corpus given id2word dictionary
         pre-process by removing words that appear
         but once.
     """
     # Remove stopwords and words that appear only once
     stoplist = stopwords.words('english')
+    # Add some words to the stoplist
+    stoplist += ['would', 'could', 'going', 'us', \
+                'also', 'mr', 'u', 'shall', 'said']
     stop_ids = [dictionary.token2id[stopword]
                     for stopword in stoplist
                     if stopword in dictionary.token2id]
