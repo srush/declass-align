@@ -5,26 +5,38 @@ either FRUS or Sasha's text predictions
 import redact.data.passwd as passwd
 import re
 
-def get_texts(limit=None):
+def get_texts(start_date='1958-01-01', end_date='1970-01-01', limit=None):
     """Establish database connection and 
     perform query to fetch rows
     
     Parameters
     ----------
+    start_date : limit query by this start date;
+                format YYYY-MM-DD
+    end_date : limit query by this end date;
+                format YYYY-MM-DD
     limit : limit the number of documents to fetch
     
     Returns
     -------
-    cursor : pointer to the DB
+    all_texts : list of strings, body of each doc
     """    
-    db = passwd.get_db()
+    db = passwd.get_frus_db()
     cursor = passwd.get_cursor(db)
+    # Total number of rows in docs is 26933
+    
+    q = "select body \
+            from docs \
+            where date >= \
+            date('" + start_date + "') \
+            and date <= \
+            date('" + end_date + "')"
+
     if limit:
-        q = "select fullbody from frus limit " + str(limit) 
-    else:
-        q = "select fullbody from frus"
+        q += " limit " + str(limit)	
+
     cursor.execute(q)
-    all_texts = [row['fullbody'] for row in cursor]
+    all_texts = [row['body'] for row in cursor]
 
     return all_texts
 
@@ -54,4 +66,29 @@ def get_surround(all_para):
             for doc in all_para \
             for p in doc]
     return surr
+
+########### Old declassification.frus table ##################
+def get_texts_old(limit=None):
+    """Establish database connection and 
+    perform query to fetch rows
+    
+    Parameters
+    ----------
+    limit : limit the number of documents to fetch
+    
+    Returns
+    -------
+    cursor : pointer to the DB
+    """    
+    db = passwd.get_db()
+    cursor = passwd.get_cursor(db)
+    if limit:
+        q = "select fullbody from frus limit " + str(limit) 
+    else:
+        q = "select fullbody from frus"
+    cursor.execute(q)
+    all_texts = [row['fullbody'] for row in cursor]
+
+    return all_texts
+
 
