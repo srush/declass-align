@@ -69,7 +69,10 @@ def make_corpus(dictionary, tokens):
     stoplist = stopwords.words('english')
     # Add some words to the stoplist
     stoplist += ['would', 'could', 'going', 'us', \
-                'also', 'mr', 'u', 'shall', 'said']
+                'also', 'mr', 'u', 'shall', 'said', \
+                'SUBJECT', 'DATE', \
+                'declassified', 'line', 'lines', 'paragraph', \
+                'text', 'source', 'less']
     stop_ids = [dictionary.token2id[stopword]
                     for stopword in stoplist
                     if stopword in dictionary.token2id]

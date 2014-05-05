@@ -55,18 +55,23 @@ def get_para(all_texts):
     """Get the paragraph surrounding the redaction 
         including the redaction marking.
         returns lists of list per document"""
-    para = [re.findall("\n(.*?\[.*?declassified.*?\].*?)\n", text) \
+    para = [re.findall("\n(.*?\[.*?declassified.*?\].*?)\n", text, re.MULTILINE) \
             for text in all_texts]
     return para
 
 def get_surround(all_para):
-    """Note that this also flattens the list, 
+    """TODO: doesn't successfully remove partial markups
+        Note that this also flattens the list, 
         Now it's a list of strings not of lists."""
-    surr = [re.sub("\[.*?declassified.*?\]", "", p) \
+    surr = [re.sub("\[.*?declassified.*?\]", "", p, re.MULTILINE) \
             for doc in all_para \
             for p in doc]
     return surr
-
+ 
+def flatten(l):
+    """Flatten a list of lists"""
+    return [item for sublist in l for item in sublist]
+    
 ########### Old declassification.frus table ##################
 def get_texts_old(limit=None):
     """Establish database connection and 
