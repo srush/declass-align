@@ -1,0 +1,22 @@
+training the lda model: 03:51:48 to 04:00:33
+40 topics
+94091 unique items in dict
+26933 docs
+
+
+import topicmodel.topicmodel as topicmodel
+import topicmodel.frus as frus
+
+all_texts = frus.get_texts()
+m = frus.topicmodel.Topicmodel(all_texts)
+lda = m.lda(40)
+
+for t in lda.show_topics(topics=40, topn=10):
+    print t
+    print
+
+#
+
+
+
+
