@@ -79,7 +79,12 @@ def make_corpus(dictionary, tokens):
     once_ids = [tokenid for tokenid, docfreq
                     in dictionary.dfs.iteritems()
                     if docfreq == 1]
-    dictionary.filter_tokens(stop_ids + once_ids)
+    # Remove words one char long
+    char_ids = [dictionary.token2id[word]
+                    for word in dictionary.token2id
+                    if len(word) == 1]
+
+    dictionary.filter_tokens(stop_ids + once_ids + char_ids)
     dictionary.compactify()
     #dictionary.save('corpus.dict')
  
