@@ -50,6 +50,7 @@ def get_indices(all_texts):
     """Indices of redactions"""
     indices = [re.finditer("\[.*?declassified.*?\]", text) \
             for text in all_texts]
+    return indices
 
 def get_para(all_texts):
     """Get the paragraph surrounding the redaction 
